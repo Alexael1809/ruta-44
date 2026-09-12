@@ -1,0 +1,66 @@
+Fase 1: Arquitectura, Base de Datos y Autenticación (Supabase)
+El cimiento de concreto del sistema.
+
+Modelado SQL: Creación de las tablas (tasa_cambio, comerciantes, productos, clientes, ordenes, pagos_movil).
+
+Autenticación Híbrida: Configurar Google Auth para clientes (rápido y seguro) y usuario/contraseña para el Admin Master y comerciantes.
+
+Reglas RLS (Row Level Security): [Implementación de Seguridad] Configurar las reglas a nivel de base de datos para que un comerciante sea físicamente incapaz de acceder a los datos de la competencia.
+
+Respaldos Automáticos: [Implementación de Seguridad] Activar copias de seguridad diarias (Point-in-Time Recovery) en Supabase para no perder ni un solo dato en caso de catástrofe.
+
+Fase 2: Backend y El "Cerebro" del Negocio (Render)
+La lógica pesada y los algoritmos.
+
+Lector de Excel con Colas (Queues): [Implementación de Escalabilidad] En vez de subir un Excel de 5,000 repuestos de golpe (lo cual tumbaría el servidor), usaremos un sistema de procesamiento en segundo plano. El comerciante sube el archivo, el sistema dice "Procesando..." y le avisa cuando termina, sin saturar la red.
+
+Algoritmo Smart Match: Programar el sistema que escanea el inventario y asigna la venta al comerciante que ofrezca el mejor costo en USD.
+
+Gestión de Transacciones Seguras: Lógica para descontar stock y, si hay falla física de inventario, mover el dinero exacto al "Saldo a favor" (billetera virtual) del cliente.
+
+Fase 3: Paneles Administrativos (Frontend en Vercel)
+Las herramientas de trabajo internas.
+
+Panel Admin Master: Dashboard con control de la Tasa del Día, visor de todas las órdenes, gestión de pagos móviles y control de usuarios.
+
+Panel de Comerciantes: Subida de inventario, interruptor de "Visibilidad al público", y botón de confirmación de "Repuesto entregado al cliente".
+
+Paginación Dinámica: [Implementación de Escalabilidad] Las tablas de órdenes y productos cargarán de 50 en 50 registros. Así, si tienes 20,000 ventas, el navegador del administrador no se congelará.
+
+Fase 4: La Tienda Web y Experiencia del Cliente (Frontend en Vercel)
+La cara pública del negocio.
+
+Catálogo y Optimización de Imágenes: [Implementación de Escalabilidad] Las fotos de los repuestos pasarán por una CDN (Red de Distribución de Contenido) para que carguen en milisegundos, reduciendo el consumo de datos en los teléfonos de los clientes.
+
+Carrito y Billetera Virtual: Flujo de compra con cálculo automático a bolívares según la tasa del día y uso de saldo a favor.
+
+Checkout y Formulario de Pago: Captura de datos del pago móvil (Banco, Cédula, Referencia, Teléfono).
+
+Doble Confirmación: Interfaz donde el cliente entra y confirma "Ya fui a buscar mi repuesto y lo tengo en mis manos".
+
+Fase 5: Notificaciones y Automatización (Bot)
+Las alertas en tiempo real.
+
+Integración Telegram Bot: Conexión del backend con la API de Telegram.
+
+Webhooks Seguros: [Implementación de Seguridad] Configurar llaves criptográficas para que el Bot de Telegram solo acepte mensajes que vengan exclusivamente de tu servidor en Render, evitando que un atacante envíe notificaciones falsas de "pagos aprobados".
+
+Fase 6: Pruebas Funcionales y Control de Calidad (QA)
+Romper el sistema nosotros, antes de que lo rompan los clientes.
+
+Pruebas del Smart Match con productos duplicados en distintos comercios.
+
+Simulación de errores en el Excel de los comerciantes (ej. letras donde van números) para ver cómo el sistema lo rechaza amablemente.
+
+Simulacros de compra completos, validando que el saldo de la billetera virtual sea matemáticamente perfecto.
+
+Fase 7: Blindaje, Seguridad Anti-Estafas y Anti-Bots
+Cerrar el sistema con candado.
+
+Escudo Anti-Bots (CAPTCHA): Integración de Cloudflare Turnstile o reCAPTCHA v3 (invisible) en el Login, Registro y en el botón de "Enviar Pago Móvil". Esto frena en seco a los bots que intenten tumbar la página con spam.
+
+Bloqueo de Referencias Duplicadas: Regla estricta en la base de datos: Una referencia de pago móvil = Un solo uso. Si alguien intenta meter la misma referencia dos veces, el sistema lo rechaza automáticamente.
+
+Prevención XSS y SQLi: Limpieza (sanitización) de todos los campos de texto (buscador, nombres) para evitar que inyecten código malicioso.
+
+Rate Limiting (Límite de peticiones): Si una dirección IP intenta buscar repuestos o iniciar sesión 100 veces en 10 segundos, será bloqueada temporalmente.

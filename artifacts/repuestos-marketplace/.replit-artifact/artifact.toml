@@ -1,0 +1,28 @@
+kind = "web"
+previewPath = "/"
+title = "Marketplace de Repuestos"
+description = "Marketplace venezolano de repuestos con catálogo público, gestión de comerciantes, órdenes, pagos móviles y control administrativo por roles."
+version = "1.0.0"
+id = "artifacts/repuestos-marketplace"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 21267
+
+[services.development]
+run = "pnpm --filter @workspace/repuestos-marketplace run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/repuestos-marketplace", "run", "build" ]
+serve = "static"
+publicDir = "artifacts/repuestos-marketplace/dist/public"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "21267"
+BASE_PATH = "/"

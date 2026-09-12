@@ -1,6 +1,6 @@
-# [Project name]
+# Marketplace de Repuestos
 
-_Replace the heading above with the project's name, and this line with one sentence describing what this app does for users._
+Marketplace venezolano para encontrar repuestos, comparar inventario local, comprar con precios en USD/Bs y administrar pedidos, pagos e inventario.
 
 ## Run & Operate
 
@@ -22,23 +22,31 @@ _Replace the heading above with the project's name, and this line with one sente
 
 ## Where things live
 
-_Populate as you build — short repo map plus pointers to the source-of-truth file for DB schema, API contracts, theme files, etc._
+- `artifacts/repuestos-marketplace` — tienda pública, carrito, checkout y paneles operativos.
+- `artifacts/api-server` — API Express, autenticación Clerk, reglas de acceso y endpoints del marketplace.
+- `lib/api-spec/openapi.yaml` — contrato único de la API; ejecutar codegen después de cambios.
+- `lib/db/src/schema/marketplace.ts` — tablas y tipos persistentes del marketplace.
 
 ## Architecture decisions
 
-_Populate as you build — non-obvious choices a reader couldn't infer from the code (3-5 bullets)._
+- Se usa PostgreSQL administrado por Replit en lugar de Supabase para mantener la base de datos dentro del entorno del proyecto; el servidor aplica el aislamiento por rol y comerciante.
+- Clerk gestiona las sesiones y Google/email-password quedan configurables desde Auth; el navegador usa cookies same-origin, sin tokens manuales.
+- La tasa de cambio se guarda en cada orden para que los totales históricos no cambien al actualizar la tasa del día.
+- La referencia de pago móvil tiene un índice único en base de datos para rechazar duplicados incluso bajo solicitudes simultáneas.
+- Los bytes de imágenes no se guardan en PostgreSQL; el esquema deja `imageUrl` listo para migrar a almacenamiento de objetos/CDN.
 
 ## Product
 
-_Describe the high-level user-facing capabilities of this app once they exist._
+Catálogo público paginado con búsqueda y categorías, detalle de producto, carrito persistente, checkout con cálculo USD/Bs, pagos móviles, seguimiento de pedidos, inventario CRUD para comerciantes y resumen administrativo.
 
 ## User preferences
 
-_Populate as you build — explicit user instructions worth remembering across sessions._
+- El usuario pidió implementar y ajustar lo necesario a partir de la especificación por fases del marketplace.
 
 ## Gotchas
 
-_Populate as you build — sharp edges, "always run X before Y" rules._
+- Después de cambiar `lib/api-spec/openapi.yaml`, ejecutar `pnpm --filter @workspace/api-spec run codegen`.
+- Los builds de Vite requieren `PORT` y `BASE_PATH`; los workflows los inyectan automáticamente.
 
 ## Pointers
 

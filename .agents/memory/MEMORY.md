@@ -1,0 +1,1 @@
+- [Marketplace architecture](marketplace-decisions.md) — keep auth/ownership checks server-side and preserve historical payment and exchange-rate invariants.
