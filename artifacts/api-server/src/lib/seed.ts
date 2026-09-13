@@ -1,14 +1,32 @@
 import { count, eq } from "drizzle-orm";
 import {
   db,
+  deliveryLocationsTable,
   exchangeRatesTable,
   merchantsTable,
+  paymentReceiverSettingsTable,
   productsTable,
+  usersTable,
 } from "@workspace/db";
 
 const today = () => new Date().toISOString().slice(0, 10);
+const masterEmail = "alexaelperdomo2410@gmail.com";
 
 export async function ensureMarketplaceSeed() {
+  const [master] = await db.select().from(usersTable).where(eq(usersTable.email, masterEmail)).limit(1);
+  if (!master) {
+    await db.insert(usersTable).values({
+      id: `master-seed:${masterEmail}`,
+      email: masterEmail,
+      name: "Admin Master",
+      role: "admin",
+      isMaster: true,
+    });
+  } else if (master.role !== "admin" || !master.isMaster) {
+    await db.update(usersTable).set({ role: "admin", isMaster: true, name: "Admin Master" })
+      .where(eq(usersTable.email, masterEmail));
+  }
+
   const [merchantCount] = await db.select({ value: count() }).from(merchantsTable);
   if (Number(merchantCount?.value ?? 0) === 0) {
     const [merchant] = await db.insert(merchantsTable).values({
@@ -63,6 +81,26 @@ export async function ensureMarketplaceSeed() {
       currency: "USD",
       effectiveDate: today(),
       updatedBy: null,
+    });
+  }
+
+  const [receiver] = await db.select().from(paymentReceiverSettingsTable).where(eq(paymentReceiverSettingsTable.isActive, true)).limit(1);
+  if (!receiver) {
+    await db.insert(paymentReceiverSettingsTable).values({
+      bank: "Configurar en Ajustes",
+      phone: "Por configurar",
+      identityNumber: "Por configurar",
+      isActive: true,
+    });
+  }
+
+  const [barinas] = await db.select().from(deliveryLocationsTable)
+    .where(eq(deliveryLocationsTable.city, "Barinas")).limit(1);
+  if (!barinas) {
+    await db.insert(deliveryLocationsTable).values({
+      state: "Barinas",
+      city: "Barinas",
+      isEnabled: true,
     });
   }
 }

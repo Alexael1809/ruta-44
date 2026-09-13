@@ -20,6 +20,11 @@ export interface OrderInput {
      * @maxLength 30
      */
   customerPhone: string;
+  /**
+     * @minLength 2
+     * @maxLength 80
+     */
+  deliveryCity: string;
   /** @maxLength 500 */
   pickupNotes?: string;
 }

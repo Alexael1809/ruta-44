@@ -14,17 +14,25 @@ import {
   UpdateProductParams,
   UpdateOrderStatusBody,
   UpdateOrderStatusParams,
+  UpdatePaymentReceiverBody,
+  CreateDeliveryLocationBody,
+  UpdateDeliveryLocationBody,
+  UpdateDeliveryLocationParams,
+  UpdateUserRoleBody,
 } from "@workspace/api-zod";
 import {
   db,
+  deliveryLocationsTable,
   exchangeRatesTable,
   merchantsTable,
   orderItemsTable,
   ordersTable,
   paymentsTable,
+  paymentReceiverSettingsTable,
   productsTable,
+  usersTable,
 } from "@workspace/db";
-import { requireAuth, optionalUser, type RequestWithUser } from "./auth";
+import { requireAuth, optionalUser, MASTER_EMAIL, type RequestWithUser } from "./auth";
 
 const router: IRouter = Router();
 const today = () => new Date().toISOString().slice(0, 10);
@@ -34,6 +42,21 @@ const pageInfo = (page: number, pageSize: number, total: number) => ({
   total,
   totalPages: Math.max(1, Math.ceil(total / pageSize)),
 });
+
+function isMaster(user: typeof usersTable.$inferSelect | null | undefined) {
+  return user?.role === "admin" && user.isMaster;
+}
+
+function publicUser(user: typeof usersTable.$inferSelect) {
+  return {
+    id: user.id,
+    email: user.email,
+    name: user.name,
+    role: user.role,
+    isMaster: user.isMaster,
+    merchantId: user.merchantId,
+  };
+}
 
 async function decorateProduct(product: typeof productsTable.$inferSelect) {
   const [merchant] = await db.select({ name: merchantsTable.name })
@@ -48,6 +71,7 @@ async function decorateOrder(order: typeof ordersTable.$inferSelect) {
     totalUsd: Number(order.totalUsd),
     totalBs: Number(order.totalBs),
     exchangeRate: Number(order.exchangeRate),
+    deliveryCity: order.deliveryCity,
     items: items.map((item) => ({
       ...item,
       unitPriceUsd: Number(item.unitPriceUsd),
@@ -93,6 +117,90 @@ router.get("/rates/today", async (_req, res, next) => {
       return;
     }
     res.json({ ...rate, value: Number(rate.value) });
+  } catch (error) {
+    next(error);
+  }
+});
+
+router.get("/payment-receiver", async (_req, res, next) => {
+  try {
+    const [receiver] = await db.select().from(paymentReceiverSettingsTable)
+      .where(eq(paymentReceiverSettingsTable.isActive, true)).limit(1);
+    if (!receiver) {
+      res.status(404).json({ error: "No hay datos de pago configurados." });
+      return;
+    }
+    res.json(receiver);
+  } catch (error) {
+    next(error);
+  }
+});
+
+router.put("/payment-receiver", requireAuth, async (req, res, next) => {
+  try {
+    const user = (req as RequestWithUser).user;
+    if (!isMaster(user)) {
+      res.status(403).json({ error: "Solo el Admin Master puede editar los datos receptores." });
+      return;
+    }
+    const body = UpdatePaymentReceiverBody.parse(req.body);
+    const [current] = await db.select().from(paymentReceiverSettingsTable)
+      .where(eq(paymentReceiverSettingsTable.isActive, true)).limit(1);
+    const [receiver] = current
+      ? await db.update(paymentReceiverSettingsTable).set({ ...body, updatedBy: user?.id ?? null, updatedAt: new Date() })
+        .where(eq(paymentReceiverSettingsTable.id, current.id)).returning()
+      : await db.insert(paymentReceiverSettingsTable).values({ ...body, updatedBy: user?.id ?? null, isActive: true }).returning();
+    res.json(receiver);
+  } catch (error) {
+    next(error);
+  }
+});
+
+router.get("/delivery-locations", async (_req, res, next) => {
+  try {
+    const locations = await db.select().from(deliveryLocationsTable)
+      .where(eq(deliveryLocationsTable.isEnabled, true)).orderBy(deliveryLocationsTable.city);
+    res.json(locations);
+  } catch (error) {
+    next(error);
+  }
+});
+
+router.post("/delivery-locations", requireAuth, async (req, res, next) => {
+  try {
+    const user = (req as RequestWithUser).user;
+    if (!isMaster(user)) {
+      res.status(403).json({ error: "Solo el Admin Master puede habilitar ciudades." });
+      return;
+    }
+    const body = CreateDeliveryLocationBody.parse(req.body);
+    const [location] = await db.insert(deliveryLocationsTable).values(body).returning();
+    res.status(201).json(location);
+  } catch (error: any) {
+    if (error?.code === "23505") {
+      res.status(409).json({ error: "Esa ciudad ya está configurada." });
+      return;
+    }
+    next(error);
+  }
+});
+
+router.patch("/delivery-locations/:locationId", requireAuth, async (req, res, next) => {
+  try {
+    const user = (req as RequestWithUser).user;
+    if (!isMaster(user)) {
+      res.status(403).json({ error: "Solo el Admin Master puede habilitar ciudades." });
+      return;
+    }
+    const { locationId } = UpdateDeliveryLocationParams.parse(req.params);
+    const body = UpdateDeliveryLocationBody.parse(req.body);
+    const [location] = await db.update(deliveryLocationsTable).set(body)
+      .where(eq(deliveryLocationsTable.id, locationId)).returning();
+    if (!location) {
+      res.status(404).json({ error: "Ciudad no encontrada." });
+      return;
+    }
+    res.json(location);
   } catch (error) {
     next(error);
   }
@@ -238,6 +346,14 @@ router.post("/orders", optionalUser, async (req, res, next) => {
   try {
     const body = CreateOrderBody.parse(req.body);
     const user = (req as RequestWithUser).user;
+    const [location] = await db.select().from(deliveryLocationsTable).where(and(
+      eq(deliveryLocationsTable.city, body.deliveryCity),
+      eq(deliveryLocationsTable.isEnabled, true),
+    )).limit(1);
+    if (!location) {
+      res.status(400).json({ error: "La ciudad de entrega no está disponible." });
+      return;
+    }
     const [rate] = await db.select().from(exchangeRatesTable)
       .where(eq(exchangeRatesTable.effectiveDate, today())).limit(1);
     if (!rate) {
@@ -268,6 +384,7 @@ router.post("/orders", optionalUser, async (req, res, next) => {
       customerId: user?.id ?? null,
       customerName: body.customerName,
       customerPhone: body.customerPhone,
+      deliveryCity: body.deliveryCity,
       pickupNotes: body.pickupNotes ?? null,
       totalUsd,
       totalBs: totalUsd * Number(rate.value),
@@ -337,6 +454,56 @@ router.get("/payments", requireAuth, async (req, res, next) => {
       db.select({ value: count() }).from(paymentsTable).where(filters.length ? and(...filters) : undefined),
     ]);
     res.json({ items: items.map((item) => ({ ...item, amountBs: Number(item.amountBs) })), ...pageInfo(page, pageSize, Number(totals[0]?.value ?? 0)) });
+  } catch (error) {
+    next(error);
+  }
+});
+
+router.get("/admin/users", requireAuth, async (req, res, next) => {
+  try {
+    const user = (req as RequestWithUser).user;
+    if (!isMaster(user)) {
+      res.status(403).json({ error: "Solo el Admin Master puede administrar usuarios." });
+      return;
+    }
+    const users = await db.select().from(usersTable).orderBy(usersTable.createdAt);
+    res.json(users.map(publicUser));
+  } catch (error) {
+    next(error);
+  }
+});
+
+router.patch("/admin/users/:userId/role", requireAuth, async (req, res, next) => {
+  try {
+    const currentUser = (req as RequestWithUser).user;
+    if (!isMaster(currentUser)) {
+      res.status(403).json({ error: "Solo el Admin Master puede cambiar roles." });
+      return;
+    }
+    const body = UpdateUserRoleBody.parse(req.body);
+    const [target] = await db.select().from(usersTable).where(eq(usersTable.id, String(req.params.userId))).limit(1);
+    if (!target) {
+      res.status(404).json({ error: "Usuario no encontrado." });
+      return;
+    }
+    if (target.isMaster || target.email.toLowerCase() === MASTER_EMAIL) {
+      res.status(400).json({ error: "El Admin Master no puede perder sus permisos." });
+      return;
+    }
+    let merchantId = body.merchantId ?? null;
+    if (body.role === "merchant" && !merchantId) {
+      const [merchant] = await db.insert(merchantsTable).values({
+        name: target.name || target.email,
+        city: "Barinas",
+        isVisible: true,
+      }).returning();
+      merchantId = merchant.id;
+    }
+    const [updated] = await db.update(usersTable).set({
+      role: body.role,
+      merchantId: body.role === "merchant" ? merchantId : null,
+    }).where(eq(usersTable.id, target.id)).returning();
+    res.json(publicUser(updated));
   } catch (error) {
     next(error);
   }

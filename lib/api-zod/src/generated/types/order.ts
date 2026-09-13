@@ -18,6 +18,7 @@ export interface Order {
   totalUsd: number;
   totalBs: number;
   exchangeRate: number;
+  deliveryCity: string;
   /** @nullable */
   pickupNotes: string | null;
   createdAt: Date;

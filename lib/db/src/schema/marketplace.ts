@@ -17,6 +17,7 @@ export const usersTable = pgTable("users", {
   email: text("email").notNull(),
   name: text("name").notNull(),
   role: text("role").notNull().default("customer"),
+  isMaster: boolean("is_master").notNull().default(false),
   merchantId: uuid("merchant_id"),
   walletBalanceBs: numeric("wallet_balance_bs", { precision: 14, scale: 2, mode: "number" }).notNull().default(0),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
@@ -68,6 +69,7 @@ export const ordersTable = pgTable("orders", {
   totalUsd: numeric("total_usd", { precision: 14, scale: 2, mode: "number" }).notNull(),
   totalBs: numeric("total_bs", { precision: 14, scale: 2, mode: "number" }).notNull(),
   exchangeRate: numeric("exchange_rate", { precision: 14, scale: 4, mode: "number" }).notNull(),
+  deliveryCity: text("delivery_city").notNull().default("Barinas"),
   pickupNotes: text("pickup_notes"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
@@ -96,6 +98,26 @@ export const paymentsTable = pgTable("payments", {
   referenceUnique: uniqueIndex("payments_reference_unique").on(table.reference),
 }));
 
+export const paymentReceiverSettingsTable = pgTable("payment_receiver_settings", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  bank: text("bank").notNull(),
+  phone: text("phone").notNull(),
+  identityNumber: text("identity_number").notNull(),
+  isActive: boolean("is_active").notNull().default(true),
+  updatedBy: text("updated_by"),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+export const deliveryLocationsTable = pgTable("delivery_locations", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  state: text("state").notNull(),
+  city: text("city").notNull(),
+  isEnabled: boolean("is_enabled").notNull().default(true),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+}, (table) => ({
+  stateCityUnique: uniqueIndex("delivery_locations_state_city_unique").on(table.state, table.city),
+}));
+
 export const insertUserSchema = createInsertSchema(usersTable).omit({ createdAt: true });
 export const insertMerchantSchema = createInsertSchema(merchantsTable).omit({ id: true, createdAt: true });
 export const insertExchangeRateSchema = createInsertSchema(exchangeRatesTable).omit({ id: true, createdAt: true });
@@ -103,6 +125,8 @@ export const insertProductSchema = createInsertSchema(productsTable).omit({ id: 
 export const insertOrderSchema = createInsertSchema(ordersTable).omit({ id: true, createdAt: true });
 export const insertOrderItemSchema = createInsertSchema(orderItemsTable).omit({ id: true });
 export const insertPaymentSchema = createInsertSchema(paymentsTable).omit({ id: true, createdAt: true });
+export const insertPaymentReceiverSettingsSchema = createInsertSchema(paymentReceiverSettingsTable).omit({ id: true, updatedAt: true });
+export const insertDeliveryLocationSchema = createInsertSchema(deliveryLocationsTable).omit({ id: true, createdAt: true });
 
 export type User = typeof usersTable.$inferSelect;
 export type Merchant = typeof merchantsTable.$inferSelect;
@@ -111,4 +135,6 @@ export type Product = typeof productsTable.$inferSelect;
 export type Order = typeof ordersTable.$inferSelect;
 export type OrderItem = typeof orderItemsTable.$inferSelect;
 export type Payment = typeof paymentsTable.$inferSelect;
+export type PaymentReceiverSettings = typeof paymentReceiverSettingsTable.$inferSelect;
+export type DeliveryLocation = typeof deliveryLocationsTable.$inferSelect;
 export type InsertProduct = z.infer<typeof insertProductSchema>;

@@ -1,0 +1,51 @@
+Necesito aplicar una serie de mejoras de UX/UI, ajustar la lógica de roles de usuario, configurar datos semilla (seed) y corregir un bug de React en el flujo del checkout de la aplicación.
+
+Por favor, implementa los siguientes cambios paso a paso:
+
+1. Cambios en la Landing Page (UI)
+
+Elimina la sección que dice "Para comerciantes / Tu inventario, sin llamadas de más..." y todo ese bloque.
+
+Reemplázalo por un texto que diga: "Si quieres ser aliado nuestro contáctanos al" seguido de un botón de diseño minimalista, color verde (estilo WhatsApp).
+
+El botón debe redirigir a este enlace: [https://wa.me/qr/VALY6ZX5YZLKE1o](https://wa.me/qr/VALY6ZX5YZLKE1o).
+
+2. Autenticación y Control de Roles
+
+Usuario Master: Crea un script de seed (o ajusta la inicialización de la base de datos) para crear automáticamente el usuario administrador maestro con estos datos:
+
+Correo: alexaelperdomo2410@gmail.com
+
+Clave: Server_2410
+
+Rol: Admin Master (Acceso total).
+
+Registro Público: Cualquier usuario nuevo que se registre desde la página web debe tener asignado automáticamente y por defecto el rol de "Cliente".
+
+Restricción de Roles: La creación o asignación de cuentas con rol de "Comerciante" o "Admin" NO debe ser pública. Solo el usuario Admin Master puede cambiar el rol de un cliente a Comerciante o crear cuentas de Comerciante/Admin manualmente desde su panel de administración.
+
+3. Mejoras de UX en el Carrito y Checkout
+
+Redirección automática: Al hacer clic en "Agregar al carrito" en cualquier producto, el usuario debe ser redirigido automáticamente a la página/vista del carrito (usa useNavigate o el router actual).
+
+Input de Cantidad: En el carrito y en la vista del producto, el campo de cantidad debe permitir escribir el número manualmente (escribir con el teclado) además de usar los botones de sumar/restar.
+
+Campo de Notas: En el checkout, modifica el campo de notas. Elimina el texto placeholder o label que dice "para retiro o envío". Déjalo simplemente como "Nota" y asegúrate de que sea un campo 100% opcional.
+
+Ciudad de Entrega: Configura la ciudad de entrega para que esté fija/por defecto en "Barinas". Por ahora será la única disponible. Agrega la lógica para que en el futuro solo el Admin Master pueda habilitar nuevos estados o ciudades desde su panel.
+
+4. Panel Admin: Datos de Pago Móvil
+
+El sistema de Pago Móvil que se muestra al cliente en el checkout no debe estar "quemado" (hardcoded) en el frontend.
+
+Crea una tabla o configuración en la base de datos para los "Datos Receptores de Pago".
+
+Solo el Admin Master podrá editar estos datos (Banco, Teléfono, Cédula) desde su panel, y esos son los que se mostrarán dinámicamente al cliente al momento de pagar.
+
+5. Corrección de Bug en el Checkout (React DOM Error)
+
+Problema: Al procesar la compra en el checkout, la aplicación crashea con el error del Error Boundary: Algo salió mal. Error al ejecutar 'insertBefore' en 'Node': El nodo antes del cual....
+
+Solución solicitada: Este es un error típico de React causado por un DOM/Hydration mismatch, condicionales que desmontan componentes abruptamente durante una transición de estado (ej. isLoading a isSuccess), o etiquetas HTML mal anidadas (como un <p> dentro de otro <p>, o falta de key en iteradores del carrito).
+
+Por favor, revisa el componente del Checkout y del Carrito. Asegúrate de usar renderizado condicional seguro (con fragmentos <></> o ternarios estrictos que no devuelvan undefined) y evita desmontar el nodo padre mientras se ejecuta la función de confirmación de la orden.

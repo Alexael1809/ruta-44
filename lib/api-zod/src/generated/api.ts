@@ -25,6 +25,7 @@ export const GetCurrentUserResponse = zod.object({
   "email": zod.string(),
   "name": zod.string(),
   "role": zod.enum(['customer', 'merchant', 'admin']),
+  "isMaster": zod.boolean(),
   "merchantId": zod.string().nullable()
 })
 
@@ -46,6 +47,7 @@ export const GetDashboardSummaryResponse = zod.object({
   "totalUsd": zod.number(),
   "totalBs": zod.number(),
   "exchangeRate": zod.number(),
+  "deliveryCity": zod.string(),
   "pickupNotes": zod.string().nullable(),
   "createdAt": zod.coerce.date(),
   "items": zod.array(zod.object({
@@ -303,6 +305,7 @@ export const ListOrdersResponse = zod.object({
   "totalUsd": zod.number(),
   "totalBs": zod.number(),
   "exchangeRate": zod.number(),
+  "deliveryCity": zod.string(),
   "pickupNotes": zod.string().nullable(),
   "createdAt": zod.coerce.date(),
   "items": zod.array(zod.object({
@@ -333,6 +336,9 @@ export const createOrderBodyCustomerNameMax = 120;
 export const createOrderBodyCustomerPhoneMin = 7;
 export const createOrderBodyCustomerPhoneMax = 30;
 
+export const createOrderBodyDeliveryCityMin = 2;
+export const createOrderBodyDeliveryCityMax = 80;
+
 export const createOrderBodyPickupNotesMax = 500;
 
 
@@ -344,6 +350,7 @@ export const CreateOrderBody = zod.object({
 })).min(1),
   "customerName": zod.string().min(createOrderBodyCustomerNameMin).max(createOrderBodyCustomerNameMax),
   "customerPhone": zod.string().min(createOrderBodyCustomerPhoneMin).max(createOrderBodyCustomerPhoneMax),
+  "deliveryCity": zod.string().min(createOrderBodyDeliveryCityMin).max(createOrderBodyDeliveryCityMax),
   "pickupNotes": zod.string().max(createOrderBodyPickupNotesMax).optional()
 })
 
@@ -356,6 +363,7 @@ export const CreateOrderResponse = zod.object({
   "totalUsd": zod.number(),
   "totalBs": zod.number(),
   "exchangeRate": zod.number(),
+  "deliveryCity": zod.string(),
   "pickupNotes": zod.string().nullable(),
   "createdAt": zod.coerce.date(),
   "items": zod.array(zod.object({
@@ -385,6 +393,7 @@ export const GetOrderResponse = zod.object({
   "totalUsd": zod.number(),
   "totalBs": zod.number(),
   "exchangeRate": zod.number(),
+  "deliveryCity": zod.string(),
   "pickupNotes": zod.string().nullable(),
   "createdAt": zod.coerce.date(),
   "items": zod.array(zod.object({
@@ -418,6 +427,7 @@ export const UpdateOrderStatusResponse = zod.object({
   "totalUsd": zod.number(),
   "totalBs": zod.number(),
   "exchangeRate": zod.number(),
+  "deliveryCity": zod.string(),
   "pickupNotes": zod.string().nullable(),
   "createdAt": zod.coerce.date(),
   "items": zod.array(zod.object({
@@ -504,6 +514,141 @@ export const SubmitPaymentResponse = zod.object({
   "amountBs": zod.number(),
   "status": zod.enum(['pending', 'approved', 'rejected']),
   "createdAt": zod.coerce.date()
+})
+
+
+/**
+ * @summary Get the active mobile payment receiver
+ */
+export const GetPaymentReceiverResponse = zod.object({
+  "id": zod.string(),
+  "bank": zod.string(),
+  "phone": zod.string(),
+  "identityNumber": zod.string(),
+  "isActive": zod.boolean(),
+  "updatedAt": zod.coerce.date()
+})
+
+
+/**
+ * @summary Update the active mobile payment receiver
+ */
+export const updatePaymentReceiverBodyBankMin = 2;
+export const updatePaymentReceiverBodyBankMax = 80;
+
+export const updatePaymentReceiverBodyPhoneMin = 7;
+export const updatePaymentReceiverBodyPhoneMax = 30;
+
+export const updatePaymentReceiverBodyIdentityNumberMin = 4;
+export const updatePaymentReceiverBodyIdentityNumberMax = 30;
+
+
+
+export const UpdatePaymentReceiverBody = zod.object({
+  "bank": zod.string().min(updatePaymentReceiverBodyBankMin).max(updatePaymentReceiverBodyBankMax),
+  "phone": zod.string().min(updatePaymentReceiverBodyPhoneMin).max(updatePaymentReceiverBodyPhoneMax),
+  "identityNumber": zod.string().min(updatePaymentReceiverBodyIdentityNumberMin).max(updatePaymentReceiverBodyIdentityNumberMax)
+})
+
+export const UpdatePaymentReceiverResponse = zod.object({
+  "id": zod.string(),
+  "bank": zod.string(),
+  "phone": zod.string(),
+  "identityNumber": zod.string(),
+  "isActive": zod.boolean(),
+  "updatedAt": zod.coerce.date()
+})
+
+
+/**
+ * @summary List enabled delivery locations
+ */
+export const ListDeliveryLocationsResponseItem = zod.object({
+  "id": zod.string(),
+  "state": zod.string(),
+  "city": zod.string(),
+  "isEnabled": zod.boolean()
+})
+export const ListDeliveryLocationsResponse = zod.array(ListDeliveryLocationsResponseItem)
+
+
+/**
+ * @summary Create a delivery location
+ */
+export const createDeliveryLocationBodyStateMin = 2;
+export const createDeliveryLocationBodyStateMax = 80;
+
+export const createDeliveryLocationBodyCityMin = 2;
+export const createDeliveryLocationBodyCityMax = 80;
+
+
+
+export const CreateDeliveryLocationBody = zod.object({
+  "state": zod.string().min(createDeliveryLocationBodyStateMin).max(createDeliveryLocationBodyStateMax),
+  "city": zod.string().min(createDeliveryLocationBodyCityMin).max(createDeliveryLocationBodyCityMax),
+  "isEnabled": zod.boolean().optional()
+})
+
+export const CreateDeliveryLocationResponse = zod.object({
+  "id": zod.string(),
+  "state": zod.string(),
+  "city": zod.string(),
+  "isEnabled": zod.boolean()
+})
+
+
+/**
+ * @summary Enable or disable a delivery location
+ */
+export const UpdateDeliveryLocationParams = zod.object({
+  "locationId": zod.coerce.string()
+})
+
+export const UpdateDeliveryLocationBody = zod.object({
+  "isEnabled": zod.boolean().optional()
+})
+
+export const UpdateDeliveryLocationResponse = zod.object({
+  "id": zod.string(),
+  "state": zod.string(),
+  "city": zod.string(),
+  "isEnabled": zod.boolean()
+})
+
+
+/**
+ * @summary List users for master administration
+ */
+export const ListAdminUsersResponseItem = zod.object({
+  "id": zod.string(),
+  "email": zod.string(),
+  "name": zod.string(),
+  "role": zod.enum(['customer', 'merchant', 'admin']),
+  "isMaster": zod.boolean(),
+  "merchantId": zod.string().nullable()
+})
+export const ListAdminUsersResponse = zod.array(ListAdminUsersResponseItem)
+
+
+/**
+ * @summary Change a user's role
+ */
+export const UpdateUserRoleParams = zod.object({
+  "userId": zod.coerce.string()
+})
+
+export const UpdateUserRoleBody = zod.object({
+  "role": zod.enum(['customer', 'merchant', 'admin']),
+  "merchantId": zod.string().nullish()
+})
+
+export const UpdateUserRoleResponse = zod.object({
+  "id": zod.string(),
+  "email": zod.string(),
+  "name": zod.string(),
+  "role": zod.enum(['customer', 'merchant', 'admin']),
+  "isMaster": zod.boolean(),
+  "merchantId": zod.string().nullable()
 })
 
 

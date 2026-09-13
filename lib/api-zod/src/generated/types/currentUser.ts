@@ -12,6 +12,7 @@ export interface CurrentUser {
   email: string;
   name: string;
   role: UserRole;
+  isMaster: boolean;
   /** @nullable */
   merchantId: string | null;
 }

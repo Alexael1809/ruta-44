@@ -22,6 +22,8 @@ tags:
     description: Mobile payment submissions
   - name: dashboard
     description: Admin overview
+  - name: administration
+    description: Master administration settings
 paths:
   /healthz:
     get:
@@ -280,6 +282,126 @@ paths:
                 $ref: "#/components/schemas/Payment"
         "409":
           description: Payment reference already used
+  /payment-receiver:
+    get:
+      operationId: getPaymentReceiver
+      tags: [payments]
+      summary: Get the active mobile payment receiver
+      responses:
+        "200":
+          description: Active payment receiver
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PaymentReceiver"
+        "404":
+          description: Payment receiver not configured
+    put:
+      operationId: updatePaymentReceiver
+      tags: [administration]
+      summary: Update the active mobile payment receiver
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PaymentReceiverInput"
+      responses:
+        "200":
+          description: Payment receiver updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PaymentReceiver"
+  /delivery-locations:
+    get:
+      operationId: listDeliveryLocations
+      tags: [orders]
+      summary: List enabled delivery locations
+      responses:
+        "200":
+          description: Enabled delivery locations
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/DeliveryLocation"
+    post:
+      operationId: createDeliveryLocation
+      tags: [administration]
+      summary: Create a delivery location
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DeliveryLocationInput"
+      responses:
+        "201":
+          description: Delivery location created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DeliveryLocation"
+  /delivery-locations/{locationId}:
+    patch:
+      operationId: updateDeliveryLocation
+      tags: [administration]
+      summary: Enable or disable a delivery location
+      parameters:
+        - $ref: "#/components/parameters/LocationId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DeliveryLocationUpdate"
+      responses:
+        "200":
+          description: Delivery location updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DeliveryLocation"
+  /admin/users:
+    get:
+      operationId: listAdminUsers
+      tags: [administration]
+      summary: List users for master administration
+      responses:
+        "200":
+          description: Users
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/AdminUser"
+  /admin/users/{userId}/role:
+    patch:
+      operationId: updateUserRole
+      tags: [administration]
+      summary: Change a user's role
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UserRoleInput"
+      responses:
+        "200":
+          description: User role updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminUser"
 components:
   parameters:
     Search:
@@ -321,6 +443,12 @@ components:
       required: true
       schema:
         type: string
+    LocationId:
+      name: locationId
+      in: path
+      required: true
+      schema:
+        type: string
   schemas:
     HealthStatus:
       type: object
@@ -340,9 +468,10 @@ components:
           type: string
         role:
           $ref: "#/components/schemas/UserRole"
+        isMaster: { type: boolean }
         merchantId:
           type: ["string", "null"]
-      required: [id, email, name, role, merchantId]
+      required: [id, email, name, role, isMaster, merchantId]
     UserRole:
       type: string
       enum: [customer, merchant, admin]
@@ -354,6 +483,58 @@ components:
         city: { type: string }
         isVisible: { type: boolean }
       required: [id, name, city, isVisible]
+    PaymentReceiver:
+      type: object
+      properties:
+        id: { type: string }
+        bank: { type: string }
+        phone: { type: string }
+        identityNumber: { type: string }
+        isActive: { type: boolean }
+        updatedAt: { type: string, format: date-time }
+      required: [id, bank, phone, identityNumber, isActive, updatedAt]
+    PaymentReceiverInput:
+      type: object
+      properties:
+        bank: { type: string, minLength: 2, maxLength: 80 }
+        phone: { type: string, minLength: 7, maxLength: 30 }
+        identityNumber: { type: string, minLength: 4, maxLength: 30 }
+      required: [bank, phone, identityNumber]
+    DeliveryLocation:
+      type: object
+      properties:
+        id: { type: string }
+        state: { type: string }
+        city: { type: string }
+        isEnabled: { type: boolean }
+      required: [id, state, city, isEnabled]
+    DeliveryLocationInput:
+      type: object
+      properties:
+        state: { type: string, minLength: 2, maxLength: 80 }
+        city: { type: string, minLength: 2, maxLength: 80 }
+        isEnabled: { type: boolean }
+      required: [state, city]
+    DeliveryLocationUpdate:
+      type: object
+      properties:
+        isEnabled: { type: boolean }
+    AdminUser:
+      type: object
+      properties:
+        id: { type: string }
+        email: { type: string }
+        name: { type: string }
+        role: { $ref: "#/components/schemas/UserRole" }
+        isMaster: { type: boolean }
+        merchantId: { type: ["string", "null"] }
+      required: [id, email, name, role, isMaster, merchantId]
+    UserRoleInput:
+      type: object
+      properties:
+        role: { $ref: "#/components/schemas/UserRole" }
+        merchantId: { type: ["string", "null"] }
+      required: [role]
     Product:
       type: object
       properties:
@@ -454,8 +635,9 @@ components:
           items: { $ref: "#/components/schemas/OrderItemInput" }
         customerName: { type: string, minLength: 2, maxLength: 120 }
         customerPhone: { type: string, minLength: 7, maxLength: 30 }
+        deliveryCity: { type: string, minLength: 2, maxLength: 80 }
         pickupNotes: { type: string, maxLength: 500 }
-      required: [items, customerName, customerPhone]
+      required: [items, customerName, customerPhone, deliveryCity]
     Order:
       type: object
       properties:
@@ -467,12 +649,13 @@ components:
         totalUsd: { type: number }
         totalBs: { type: number }
         exchangeRate: { type: number }
+        deliveryCity: { type: string }
         pickupNotes: { type: ["string", "null"] }
         createdAt: { type: string, format: date-time }
         items:
           type: array
           items: { $ref: "#/components/schemas/OrderItem" }
-      required: [id, customerId, customerName, customerPhone, status, totalUsd, totalBs, exchangeRate, pickupNotes, createdAt, items]
+      required: [id, customerId, customerName, customerPhone, status, totalUsd, totalBs, exchangeRate, deliveryCity, pickupNotes, createdAt, items]
     OrderPage:
       type: object
       properties:

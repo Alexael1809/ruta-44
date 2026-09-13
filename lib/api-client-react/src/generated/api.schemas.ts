@@ -23,6 +23,7 @@ export interface CurrentUser {
   email: string;
   name: string;
   role: UserRole;
+  isMaster: boolean;
   /** @nullable */
   merchantId: string | null;
 }
@@ -32,6 +33,74 @@ export interface Merchant {
   name: string;
   city: string;
   isVisible: boolean;
+}
+
+export interface PaymentReceiver {
+  id: string;
+  bank: string;
+  phone: string;
+  identityNumber: string;
+  isActive: boolean;
+  updatedAt: string;
+}
+
+export interface PaymentReceiverInput {
+  /**
+     * @minLength 2
+     * @maxLength 80
+     */
+  bank: string;
+  /**
+     * @minLength 7
+     * @maxLength 30
+     */
+  phone: string;
+  /**
+     * @minLength 4
+     * @maxLength 30
+     */
+  identityNumber: string;
+}
+
+export interface DeliveryLocation {
+  id: string;
+  state: string;
+  city: string;
+  isEnabled: boolean;
+}
+
+export interface DeliveryLocationInput {
+  /**
+     * @minLength 2
+     * @maxLength 80
+     */
+  state: string;
+  /**
+     * @minLength 2
+     * @maxLength 80
+     */
+  city: string;
+  isEnabled?: boolean;
+}
+
+export interface DeliveryLocationUpdate {
+  isEnabled?: boolean;
+}
+
+export interface AdminUser {
+  id: string;
+  email: string;
+  name: string;
+  role: UserRole;
+  isMaster: boolean;
+  /** @nullable */
+  merchantId: string | null;
+}
+
+export interface UserRoleInput {
+  role: UserRole;
+  /** @nullable */
+  merchantId?: string | null;
 }
 
 export interface Product {
@@ -198,6 +267,11 @@ export interface OrderInput {
      * @maxLength 30
      */
   customerPhone: string;
+  /**
+     * @minLength 2
+     * @maxLength 80
+     */
+  deliveryCity: string;
   /** @maxLength 500 */
   pickupNotes?: string;
 }
@@ -212,6 +286,7 @@ export interface Order {
   totalUsd: number;
   totalBs: number;
   exchangeRate: number;
+  deliveryCity: string;
   /** @nullable */
   pickupNotes: string | null;
   createdAt: string;
