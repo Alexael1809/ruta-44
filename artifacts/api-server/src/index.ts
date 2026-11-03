@@ -1,14 +1,10 @@
+import "dotenv/config";
 import app from "./app";
 import { logger } from "./lib/logger";
 import { ensureMarketplaceSeed } from "./lib/seed";
+import { startOrderExpirationJob } from "./jobs/order-expiration";
 
-const rawPort = process.env["PORT"];
-
-if (!rawPort) {
-  throw new Error(
-    "PORT environment variable is required but was not provided.",
-  );
-}
+const rawPort = process.env["PORT"] || "5000";
 
 const port = Number(rawPort);
 
@@ -24,6 +20,8 @@ ensureMarketplaceSeed()
         process.exit(1);
       }
       logger.info({ port }, "Server listening");
+      // Start background order expiration worker (every 5 min)
+      startOrderExpirationJob();
     });
   })
   .catch((err) => {

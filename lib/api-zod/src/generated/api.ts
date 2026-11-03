@@ -37,7 +37,7 @@ export const GetDashboardSummaryResponse = zod.object({
   "todaySalesUsd": zod.number(),
   "pendingPayments": zod.number().int(),
   "activeProducts": zod.number().int(),
-  "activeMerchants": zod.number().int(),
+  "activeMerchants": zod.number().int().optional(),
   "recentOrders": zod.array(zod.object({
   "id": zod.string(),
   "customerId": zod.string().nullable(),
@@ -142,7 +142,9 @@ export const ListProductsResponse = zod.object({
   "stock": zod.number().int(),
   "imageUrl": zod.string().nullable(),
   "isVisible": zod.boolean(),
-  "condition": zod.string()
+  "condition": zod.string(),
+  "merchantRating": zod.number().optional(),
+  "merchantRatingsCount": zod.number().optional()
 })),
   "page": zod.number().int(),
   "pageSize": zod.number().int(),
@@ -194,7 +196,9 @@ export const CreateProductResponse = zod.object({
   "stock": zod.number().int(),
   "imageUrl": zod.string().nullable(),
   "isVisible": zod.boolean(),
-  "condition": zod.string()
+  "condition": zod.string(),
+  "merchantRating": zod.number().optional(),
+  "merchantRatingsCount": zod.number().optional()
 })
 
 
@@ -217,7 +221,9 @@ export const GetProductResponse = zod.object({
   "stock": zod.number().int(),
   "imageUrl": zod.string().nullable(),
   "isVisible": zod.boolean(),
-  "condition": zod.string()
+  "condition": zod.string(),
+  "merchantRating": zod.number().optional(),
+  "merchantRatingsCount": zod.number().optional()
 })
 
 
@@ -265,7 +271,9 @@ export const UpdateProductResponse = zod.object({
   "stock": zod.number().int(),
   "imageUrl": zod.string().nullable(),
   "isVisible": zod.boolean(),
-  "condition": zod.string()
+  "condition": zod.string(),
+  "merchantRating": zod.number().optional(),
+  "merchantRatingsCount": zod.number().optional()
 })
 
 
@@ -526,6 +534,9 @@ export const GetPaymentReceiverResponse = zod.object({
   "phone": zod.string(),
   "identityNumber": zod.string(),
   "isActive": zod.boolean(),
+  "qrImageData": zod.string().nullable().optional(),
+  "qrSha256": zod.string().nullable().optional(),
+  "allowClipboardCopy": zod.boolean().optional(),
   "updatedAt": zod.coerce.date()
 })
 
@@ -547,7 +558,10 @@ export const updatePaymentReceiverBodyIdentityNumberMax = 30;
 export const UpdatePaymentReceiverBody = zod.object({
   "bank": zod.string().min(updatePaymentReceiverBodyBankMin).max(updatePaymentReceiverBodyBankMax),
   "phone": zod.string().min(updatePaymentReceiverBodyPhoneMin).max(updatePaymentReceiverBodyPhoneMax),
-  "identityNumber": zod.string().min(updatePaymentReceiverBodyIdentityNumberMin).max(updatePaymentReceiverBodyIdentityNumberMax)
+  "identityNumber": zod.string().min(updatePaymentReceiverBodyIdentityNumberMin).max(updatePaymentReceiverBodyIdentityNumberMax),
+  "qrImageData": zod.string().nullable().optional(),
+  "qrSha256": zod.string().nullable().optional(),
+  "allowClipboardCopy": zod.boolean().optional(),
 })
 
 export const UpdatePaymentReceiverResponse = zod.object({
@@ -556,6 +570,9 @@ export const UpdatePaymentReceiverResponse = zod.object({
   "phone": zod.string(),
   "identityNumber": zod.string(),
   "isActive": zod.boolean(),
+  "qrImageData": zod.string().nullable().optional(),
+  "qrSha256": zod.string().nullable().optional(),
+  "allowClipboardCopy": zod.boolean().optional(),
   "updatedAt": zod.coerce.date()
 })
 

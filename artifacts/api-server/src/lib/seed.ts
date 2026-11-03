@@ -11,6 +11,8 @@ import {
 
 const today = () => new Date().toISOString().slice(0, 10);
 const masterEmail = "alexaelperdomo2410@gmail.com";
+// Password hygiene: strictly read credentials from environment variables without hardcoded fallbacks
+const masterInitialPassword = process.env.MASTER_INITIAL_PASSWORD || "";
 
 export async function ensureMarketplaceSeed() {
   const [master] = await db.select().from(usersTable).where(eq(usersTable.email, masterEmail)).limit(1);

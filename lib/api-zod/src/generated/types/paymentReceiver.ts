@@ -12,5 +12,8 @@ export interface PaymentReceiver {
   phone: string;
   identityNumber: string;
   isActive: boolean;
+  qrImageData?: string | null;
+  qrSha256?: string | null;
+  allowClipboardCopy?: boolean;
   updatedAt: Date;
 }

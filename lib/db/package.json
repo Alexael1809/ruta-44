@@ -8,10 +8,13 @@
     "./schema": "./src/schema/index.ts"
   },
   "scripts": {
-    "push": "drizzle-kit push --config ./drizzle.config.ts",
-    "push-force": "drizzle-kit push --force --config ./drizzle.config.ts"
+    "migrate": "node migrate.mjs",
+    "push": "node migrate.mjs",
+    "push-force": "node migrate.mjs",
+    "generate": "drizzle-kit generate --config ./drizzle.config.ts"
   },
   "dependencies": {
+    "dotenv": "^18.0.9",
     "drizzle-orm": "catalog:",
     "drizzle-zod": "^0.8.3",
     "pg": "^8.23.0",

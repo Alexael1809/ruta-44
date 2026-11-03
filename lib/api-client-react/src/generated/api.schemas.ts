@@ -33,6 +33,12 @@ export interface Merchant {
   name: string;
   city: string;
   isVisible: boolean;
+  businessName?: string | null;
+  rif?: string | null;
+  contactPhone?: string | null;
+  address?: string | null;
+  businessHours?: string | null;
+  hasDelivery?: boolean | null;
 }
 
 export interface PaymentReceiver {
@@ -41,6 +47,9 @@ export interface PaymentReceiver {
   phone: string;
   identityNumber: string;
   isActive: boolean;
+  qrImageData?: string | null;
+  qrSha256?: string | null;
+  allowClipboardCopy?: boolean;
   updatedAt: string;
 }
 
@@ -60,6 +69,9 @@ export interface PaymentReceiverInput {
      * @maxLength 30
      */
   identityNumber: string;
+  qrImageData?: string | null;
+  qrSha256?: string | null;
+  allowClipboardCopy?: boolean;
 }
 
 export interface DeliveryLocation {
@@ -107,6 +119,8 @@ export interface Product {
   id: string;
   merchantId: string;
   merchantName: string;
+  merchantRating?: number;
+  merchantRatingsCount?: number;
   name: string;
   sku: string;
   category: string;
@@ -291,6 +305,45 @@ export interface Order {
   pickupNotes: string | null;
   createdAt: string;
   items: OrderItem[];
+  payment?: {
+    id: string;
+    orderId: string;
+    bank: string;
+    identityNumber: string;
+    reference: string;
+    phone: string;
+    amountBs: number;
+    receiptUrl?: string | null;
+    status: 'pending' | 'approved' | 'rejected';
+    createdAt: string;
+  } | null;
+  merchant?: {
+    id: string;
+    name: string;
+    city: string;
+    businessName?: string | null;
+    rif?: string | null;
+    contactPhone?: string | null;
+    address?: string | null;
+    businessHours?: string | null;
+    hasDelivery?: boolean;
+  } | null;
+  merchantRating?: {
+    id: string;
+    score: number;
+    comment?: string | null;
+    createdAt: string;
+  } | null;
+  customerRating?: {
+    id: string;
+    score: number;
+    comment?: string | null;
+    createdAt: string;
+  } | null;
+  customerReputation?: {
+    avgScore: number;
+    totalCount: number;
+  } | null;
 }
 
 export interface OrderPage {
@@ -334,6 +387,7 @@ export interface PaymentInput {
   phone: string;
   /** @minimum 0 */
   amountBs: number;
+  receiptUrl?: string | null;
 }
 
 export interface Payment {
@@ -344,6 +398,7 @@ export interface Payment {
   reference: string;
   phone: string;
   amountBs: number;
+  receiptUrl?: string | null;
   status: PaymentStatus;
   createdAt: string;
 }
@@ -365,7 +420,7 @@ export interface DashboardSummary {
   todaySalesUsd: number;
   pendingPayments: number;
   activeProducts: number;
-  activeMerchants: number;
+  activeMerchants?: number;
   recentOrders: Order[];
   topCategories: DashboardSummaryTopCategoriesItem[];
 }

@@ -22,4 +22,7 @@ export interface PaymentReceiverInput {
      * @maxLength 30
      */
   identityNumber: string;
+  qrImageData?: string | null;
+  qrSha256?: string | null;
+  allowClipboardCopy?: boolean;
 }
