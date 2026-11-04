@@ -5,6 +5,24 @@ import { ErrorBoundary } from '@/components/error-boundary';
 
 import './index.css';
 
+// Automatically route API requests to remote backend in production if VITE_API_URL is configured
+const apiUrl = import.meta.env.VITE_API_URL;
+if (apiUrl) {
+  const cleanApiUrl = apiUrl.replace(/\/+$/, '');
+  const originalFetch = window.fetch;
+  window.fetch = (input: RequestInfo | URL, init?: RequestInit) => {
+    let target = input;
+    if (typeof input === 'string' && input.startsWith('/api')) {
+      target = `${cleanApiUrl}${input}`;
+    }
+    const options: RequestInit = {
+      credentials: 'include',
+      ...init,
+    };
+    return originalFetch(target, options);
+  };
+}
+
 createRoot(document.getElementById('root')!, {
   // Keeps caught errors off reportError(), which would raise the dev overlay.
   onCaughtError: (error, errorInfo) => {
