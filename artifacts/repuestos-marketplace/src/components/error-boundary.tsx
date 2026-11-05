@@ -37,28 +37,34 @@ function toError(value: unknown): Error {
 
 function DefaultFallback({ error, resetError }: ErrorFallbackProps) {
   return (
-    <div className="min-h-screen w-full flex items-center justify-center bg-gray-50 p-6">
-      <div className="max-w-lg w-full text-center">
-        <h1 className="text-xl font-semibold text-gray-900">
-          Something went wrong
+    <div className="min-h-screen w-full flex items-center justify-center bg-gray-50 p-6 text-foreground">
+      <div className="max-w-lg w-full text-center bg-card p-8 rounded-2xl border border-border shadow-sm">
+        <h1 className="text-xl font-bold font-display text-gray-900 dark:text-gray-100">
+          Algo no salió como esperábamos
         </h1>
-        <p className="mt-2 text-sm text-gray-600">
-          This part of the app hit an error. The rest of the app is still
-          running.
+        <p className="mt-2 text-sm text-gray-600 dark:text-gray-300">
+          Esta sección de la aplicación encontró un problema temporal.
         </p>
-        {/* Dev only: messages can carry API responses and other internals. */}
-        {import.meta.env.DEV ? (
-          <pre className="mt-4 overflow-x-auto rounded bg-gray-100 p-3 text-left text-xs text-gray-800">
-            {error.message || String(error)}
-          </pre>
+        {error?.message ? (
+          <div className="mt-4 overflow-x-auto rounded-lg bg-destructive/10 p-3 text-left text-xs font-mono text-destructive border border-destructive/20">
+            {error.message}
+          </div>
         ) : null}
-        <button
-          type="button"
-          onClick={resetError}
-          className="mt-4 rounded bg-gray-900 px-4 py-2 text-sm text-white hover:bg-gray-700"
-        >
-          Try again
-        </button>
+        <div className="mt-6 flex flex-col sm:flex-row items-center justify-center gap-3">
+          <button
+            type="button"
+            onClick={resetError}
+            className="w-full sm:w-auto rounded-lg bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition"
+          >
+            Reintentar
+          </button>
+          <a
+            href="/"
+            className="w-full sm:w-auto rounded-lg border border-border bg-background px-5 py-2.5 text-sm font-medium text-foreground hover:bg-accent/10 transition"
+          >
+            Volver al catálogo
+          </a>
+        </div>
       </div>
     </div>
   );

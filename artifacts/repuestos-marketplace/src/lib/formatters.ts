@@ -8,23 +8,25 @@
  * Formats a numeric value into USD currency format (e.g. "$12.50").
  */
 export function usd(value: number): string {
+  const num = typeof value === 'number' && !isNaN(value) ? value : Number(value) || 0;
   return new Intl.NumberFormat('en-US', {
     style: 'currency',
     currency: 'USD',
     minimumFractionDigits: 2,
-  }).format(value);
+  }).format(num);
 }
 
 /**
  * Formats a numeric value into Venezuelan Bolívares currency string (e.g. "Bs. 450,00").
  */
 export function bs(value: number): string {
+  const num = typeof value === 'number' && !isNaN(value) ? value : Number(value) || 0;
   return new Intl.NumberFormat('es-VE', {
     style: 'currency',
     currency: 'VES',
     minimumFractionDigits: 2,
   })
-    .format(value)
+    .format(num)
     .replace('VES', 'Bs.');
 }
 
@@ -33,11 +35,17 @@ export function bs(value: number): string {
  */
 export function dateLabel(value?: string | null): string {
   if (!value) return '—';
-  return new Intl.DateTimeFormat('es-VE', {
-    day: '2-digit',
-    month: 'short',
-    year: 'numeric',
-  }).format(new Date(value));
+  try {
+    const d = new Date(value);
+    if (isNaN(d.getTime())) return String(value);
+    return new Intl.DateTimeFormat('es-VE', {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric',
+    }).format(d);
+  } catch {
+    return String(value);
+  }
 }
 
 /**

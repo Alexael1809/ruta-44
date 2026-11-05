@@ -373,7 +373,7 @@ export default function SettingsPage() {
                 Tasa del día
               </p>
               <h2 className="mt-2 font-display text-3xl font-bold">
-                {isLoading ? '—' : rate ? `${rate.value.toFixed(2)} Bs.` : 'Sin tasa'}
+                {isLoading ? '—' : rate ? `${Number(rate.value).toFixed(2)} Bs.` : 'Sin tasa'}
               </h2>
             </div>
             <CircleDollarSign className="h-8 w-8 text-secondary" />
@@ -416,7 +416,7 @@ export default function SettingsPage() {
                       type="number"
                       value={value}
                       onChange={(event) => setValue(event.target.value)}
-                      placeholder={rate?.value.toFixed(2) ?? '36.50'}
+                      placeholder={rate?.value != null ? Number(rate.value).toFixed(2) : '36.50'}
                       className="h-11 rounded-lg border border-input bg-background px-3 font-mono text-sm outline-none focus:border-accent"
                       data-testid="input-exchange-rate"
                     />
@@ -763,7 +763,7 @@ export default function SettingsPage() {
               </p>
             </div>
             <div className="mt-5 flex flex-wrap gap-2">
-              {locations.map((location) => (
+              {(Array.isArray(locations) ? locations : []).map((location) => (
                 <span
                   key={location.id}
                   className="rounded-full border border-[#b8dccd] bg-[#e8f4ef] px-3 py-1.5 text-xs font-medium text-[#256b55]"
@@ -832,7 +832,7 @@ export default function SettingsPage() {
                   Cargando usuarios…
                 </p>
               ) : (
-                usersQuery.data?.map((target) => (
+                (Array.isArray(usersQuery.data) ? usersQuery.data : []).map((target) => (
                   <div
                     key={target.id}
                     className="flex flex-col gap-3 py-4 sm:flex-row sm:items-center sm:justify-between"

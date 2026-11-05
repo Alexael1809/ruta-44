@@ -5,12 +5,14 @@ import { SignUp } from '@clerk/react';
 import { publishableKeyFromHost } from '@clerk/react/internal';
 import { ArrowRight, Wrench } from 'lucide-react';
 import { Link } from 'wouter';
+import { ErrorBoundary } from '@/components/error-boundary';
 
 const basePath = import.meta.env.BASE_URL.replace(/\/$/, '');
-const clerkPubKey = publishableKeyFromHost(
-  window.location.hostname,
-  import.meta.env.VITE_CLERK_PUBLISHABLE_KEY,
-);
+const DEFAULT_CLERK_KEY = 'pk_test_ZmFzdC1sYWItODQzNS5jbGVyay5hY2NvdW50cy5kZXYk';
+const clerkPubKey =
+  import.meta.env.VITE_CLERK_PUBLISHABLE_KEY ||
+  publishableKeyFromHost(window.location.hostname, DEFAULT_CLERK_KEY) ||
+  DEFAULT_CLERK_KEY;
 
 function Logo({ compact = false }: { compact?: boolean }) {
   return (
@@ -55,11 +57,13 @@ export default function SignUpPage() {
 
   return (
     <div className="flex min-h-[100dvh] items-center justify-center bg-primary px-4 py-10">
-      <SignUp
-        routing="path"
-        path={`${basePath}/sign-up`}
-        signInUrl={`${basePath}/sign-in`}
-      />
+      <ErrorBoundary FallbackComponent={() => <AuthUnavailable kind="sign-up" />}>
+        <SignUp
+          routing="path"
+          path={`${basePath}/sign-up`}
+          signInUrl={`${basePath}/sign-in`}
+        />
+      </ErrorBoundary>
     </div>
   );
 }
